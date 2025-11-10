@@ -8,6 +8,6 @@ public class Comida extends ElementosSnake {
 
     @Override
     public void dibujar(Graphics g) {
-        //Aqui se deberia dibujar la comida en las coodenadas dadas   
+        //Aqui se deberia dibujar la comida en las coodenadas dadas la primera
     }
 }
