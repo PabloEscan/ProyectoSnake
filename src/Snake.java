@@ -69,7 +69,7 @@ public class Snake extends ElementosSnake {
     
     // Método privado que hace que la cola siga a la cabeza
     private void moverCola() {
-        if (cola != null && cola.size() > 0) {s
+        if (cola != null && cola.size() > 0) {
             // mueve cada segmento a la posición del que tiene adelante
             for (int i = cola.size() - 1; i > 0; i--) {
                 ElementosSnake segmentoActual = cola.get(i);

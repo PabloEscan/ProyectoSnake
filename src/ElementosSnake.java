@@ -33,7 +33,7 @@ public abstract class ElementosSnake implements Cloneable {
     //X
     public int getX(){ 
         return x; 
-    }  
+    } 
     public void setX(int x){ 
         this.x = x; 
     }
