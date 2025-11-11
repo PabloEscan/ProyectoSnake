@@ -1,12 +1,16 @@
 import java.awt.Graphics;
 
+// Clase base abstracta para todos los elementos del juego
+// Implementa Cloneable para usar el Patrón Prototype
 public abstract class ElementosSnake implements Cloneable {
 
+    // Atributos comunes para todos los elementos (id, posición, tipo)
     protected int id;
     protected int x;
     protected int y;
     protected String tipo;
 
+    // Constructor para inicializar los atributos comunes
     public ElementosSnake(int id, int x, int y, String tipo) {
         this.id = id;
         this.x = x;
@@ -14,11 +18,10 @@ public abstract class ElementosSnake implements Cloneable {
         this.tipo = tipo;
     }
     
-    /*Método abstracto para dibujar cada clase debe sobrescribirlo dependiendo el uso por ejemplo la
-     * manzana debe ser un circulo o una figura con su respectivo color, y el snake un cuadro.
-    */
+    // Método abstracto para el dibujo
     public abstract void dibujar(Graphics g);
     
+    //Getters y Setters 
     //ID
     public int getId(){ 
         return id; 
@@ -30,7 +33,7 @@ public abstract class ElementosSnake implements Cloneable {
     //X
     public int getX(){ 
         return x; 
-    }  
+    }  
     public void setX(int x){ 
         this.x = x; 
     }
@@ -51,42 +54,17 @@ public abstract class ElementosSnake implements Cloneable {
         this.tipo = tipo; 
     }
 
-    /*Esta parte aun esta de probar la hize a ciegas ya que no se aun como sera la clase snake o la manzana ni 
-     * como manejaremos el espacio..
-    */
+    // --- Método del Patrón Prototype ---
+
+    // El patrón Prototype indica que clone() solo debe crear una copia exacta del objeto
+    // La lógica de asignar nuevos IDs o mover el clon 
     
     @Override
     public ElementosSnake clone() {
         try {
-            ElementosSnake copia = (ElementosSnake) super.clone();
-            switch (tipo.toLowerCase()) {
-                case "snake":
-                    /*El nuevo segmento va detrás: ajustamos Y o X este metodo aun no esta termiado 
-                     * faltaria ver una forma para que el matron le ponga atras de Y o X sin que se ponga
-                     * mal o que deje de seguir a la orginal esto se hara en la parte grafica o en la clase
-                     * tambien porque dependiendo del tamaño del snake se debe poner sin que se vean espacios
-                     * blancos
-                    */
-                    copia.setY(this.y + 10);
-                    break;
-                case "manzana":
-                    /*La nueva manzana se pone abajo sumamos y ya que asi se colocara más abajo de la pantalla
-                     * tambien este metodo esta por decir asi terminado ya que no hay mucho más que hacer solo
-                     * ajustar lo que es si funciona o si en dado caso debe estar restando dependiendo de como 
-                     * configuremos las coordenadas
-                    */
-                    copia.setY(this.y + 30);
-                    break;
-                default:
-                    // por si se clona algo que no necesita de algo extra
-                    break;
-            }
-
-            // Cambiamos el ID para distinguir los clones sumando 1
-            copia.setId(this.id + 1);
-
-            return copia;
-
+            // Llama a super.clone() para hacer la copia exacta
+            return (ElementosSnake) super.clone();
+            
         } catch (CloneNotSupportedException e) {
             System.out.println("Error: la clonación no es posible");
             e.printStackTrace();
@@ -94,4 +72,3 @@ public abstract class ElementosSnake implements Cloneable {
         }
     }
 }
-
