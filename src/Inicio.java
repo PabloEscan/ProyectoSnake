@@ -68,14 +68,14 @@ public class Inicio extends JFrame {
 
         add(panelControles, BorderLayout.EAST);
 
-        // === Eventos ===
+        //Eventos
         btnIniciarObjetos.addActionListener(e -> iniciarObjetos());
         btnClonarComida.addActionListener(e -> clonarComida());
         btnActualizar.addActionListener(e -> actualizarComida());
         btnIniciar.addActionListener(e -> toggleMovimiento());
     }
 
-    // ====================== MÉTODOS PRINCIPALES ======================
+    //Métodos
 
     private void iniciarObjetos() {
         comidasClonadas.clear();
@@ -150,9 +150,17 @@ public class Inicio extends JFrame {
         if (movimientoActivo) panelJuego.requestFocusInWindow();
     }
 
-    // ====================== PANEL DE JUEGO ======================
+   //Panel de juego
 
     private class GamePanel extends JPanel implements KeyListener {
+
+        private boolean movimientoPermitido(int x, int y) {
+            return x >= 0 &&
+                y >= 0 &&
+                x + 20 <= getWidth() &&
+                y + 20 <= getHeight();
+        }
+
 
         public GamePanel() {
             setBackground(Color.WHITE);
@@ -164,7 +172,7 @@ public class Inicio extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            // Dibujar la comida base (id = 0)
+            // Dibujar la comida base
             if (comidaBase != null) {
                 comidaBase.dibujar(g);
             }
@@ -185,10 +193,23 @@ public class Inicio extends JFrame {
             if (!movimientoActivo || snake == null) return;
 
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_UP -> snake.moverArriba();
-                case KeyEvent.VK_DOWN -> snake.moverAbajo();
-                case KeyEvent.VK_LEFT -> snake.moverIzquierda();
-                case KeyEvent.VK_RIGHT -> snake.moverDerecha();
+                case KeyEvent.VK_UP -> {
+                    if (movimientoPermitido(snake.getX(), snake.getY() - 20))
+                        snake.moverArriba();
+                }
+                case KeyEvent.VK_DOWN -> {
+                    if (movimientoPermitido(snake.getX(), snake.getY() + 20))
+                        snake.moverAbajo();
+                }
+                case KeyEvent.VK_LEFT -> {
+                    if (movimientoPermitido(snake.getX() - 20, snake.getY()))
+                        snake.moverIzquierda();
+                }
+                case KeyEvent.VK_RIGHT -> {
+                    if (movimientoPermitido(snake.getX() + 20, snake.getY()))
+                        snake.moverDerecha();
+                }
+
             }
 
             // Verificar colisiones
@@ -203,7 +224,7 @@ public class Inicio extends JFrame {
         Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
         Integer idColision = null;
 
-        // === 1️⃣ Verificar colisión con comida ===
+        //Verificar colisión con comida ===
         for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
             Comida c = entry.getValue();
             Rectangle rComida = new Rectangle(c.getX(), c.getY(), 20, 20);
@@ -220,7 +241,7 @@ public class Inicio extends JFrame {
             panelJuego.repaint();
         }
 
-        // === 2️⃣ Verificar colisión con su propio cuerpo ===
+        //Verificar colisión con su propio cuerpo
         // Recorremos todos los segmentos de la cola de la serpiente
         try {
             java.lang.reflect.Field colaField = snake.getClass().getDeclaredField("cola");
@@ -247,7 +268,7 @@ public class Inicio extends JFrame {
         @Override public void keyReleased(KeyEvent e) {}
     }
 
-    // ====================== MAIN ======================
+    //Main
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Inicio().setVisible(true));
     }
