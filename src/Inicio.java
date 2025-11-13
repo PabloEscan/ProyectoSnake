@@ -81,17 +81,31 @@ public class Inicio extends JFrame {
         comidasClonadas.clear();
         contadorIds.set(1);
 
-        // Crear y registrar la comida prototipo
+        // Crear la comida prototipo
         comidaBase = new Comida(0, 5, 5);
         registro.registrarPrototipo("comidaBase", comidaBase);
 
-        // Crear y registrar el segmento base y la serpiente
-        snake = new Snake(0, panelJuego.getWidth() / 2, panelJuego.getHeight() / 2, "segmentoBase", registro);
-        registro.registrarPrototipo("segmentoBase", snake.clone());
+        // Crear la serpiente (solo la cabeza)
+        snake = new Snake(0, panelJuego.getWidth() / 2, panelJuego.getHeight() / 2, "serpiente", registro);
+
+        // Registrar un segmento base por separado (NO clonando la serpiente)
+        // Registrar un segmento base que se dibuje como parte de la serpiente
+        ElementosSnake segmentoBase = new ElementosSnake(0, 0, 0, "segmento") {
+            @Override
+            public void dibujar(Graphics g) {
+                g.setColor(new Color(0, 128, 0)); // verde oscuro
+                g.fillRect(x, y, 20, 20);
+            }
+        };
+        registro.registrarPrototipo("segmentoBase", segmentoBase);
+
+        segmentoBase.setTipo("segmento");
+        registro.registrarPrototipo("segmentoBase", segmentoBase);
 
         JOptionPane.showMessageDialog(this, "Objetos base iniciados correctamente.");
         panelJuego.repaint();
     }
+
 
     private void clonarComida() {
         ElementosSnake prototipo = registro.obtenerPrototipo("comidaBase");
@@ -183,26 +197,51 @@ public class Inicio extends JFrame {
             repaint();
         }
 
-        private void checkColisiones() {
-            if (snake == null || comidasClonadas.isEmpty()) return;
+    private void checkColisiones() {
+        if (snake == null) return;
 
-            Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
-            Integer idColision = null;
+        Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
+        Integer idColision = null;
 
-            for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
-                Comida c = entry.getValue();
-                Rectangle rComida = new Rectangle(c.getX(), c.getY(), 20, 20);
-                if (cabeza.intersects(rComida)) {
-                    idColision = entry.getKey();
+        // === 1️⃣ Verificar colisión con comida ===
+        for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
+            Comida c = entry.getValue();
+            Rectangle rComida = new Rectangle(c.getX(), c.getY(), 20, 20);
+
+            if (cabeza.intersects(rComida)) {
+                idColision = entry.getKey();
+                break;
+            }
+        }
+
+        if (idColision != null) {
+            comidasClonadas.remove(idColision);
+            snake.crecer();
+            panelJuego.repaint();
+        }
+
+        // === 2️⃣ Verificar colisión con su propio cuerpo ===
+        // Recorremos todos los segmentos de la cola de la serpiente
+        try {
+            java.lang.reflect.Field colaField = snake.getClass().getDeclaredField("cola");
+            colaField.setAccessible(true);
+            java.util.List<ElementosSnake> cola = (java.util.List<ElementosSnake>) colaField.get(snake);
+
+            for (ElementosSnake segmento : cola) {
+                Rectangle rSegmento = new Rectangle(segmento.getX(), segmento.getY(), 20, 20);
+                if (cabeza.intersects(rSegmento)) {
+                    movimientoActivo = false;
+                    btnIniciar.setText("Iniciar (Movimiento)");
+                    JOptionPane.showMessageDialog(null, "¡Game Over! La serpiente se mordió a sí misma.");
                     break;
                 }
             }
-
-            if (idColision != null) {
-                comidasClonadas.remove(idColision);
-                snake.crecer();
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+
 
         @Override public void keyTyped(KeyEvent e) {}
         @Override public void keyReleased(KeyEvent e) {}
@@ -213,3 +252,4 @@ public class Inicio extends JFrame {
         SwingUtilities.invokeLater(() -> new Inicio().setVisible(true));
     }
 }
+ 
