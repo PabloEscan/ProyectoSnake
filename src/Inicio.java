@@ -5,20 +5,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Inicio extends JFrame {
-
     private GamePanel panelJuego;
     private JButton btnIniciarObjetos;
     private JButton btnClonarComida;
     private JButton btnActualizar;
     private JButton btnIniciar;
     private JTextField txtId, txtX, txtY;
-
     private PrototypeRegistry registro;
     private Snake snake;
     private Comida comidaBase;
     private Map<Integer, Comida> comidasClonadas;
     private AtomicInteger contadorIds;
-
     private boolean movimientoActivo = false;
 
     public Inicio() {
@@ -38,7 +35,7 @@ public class Inicio extends JFrame {
 
         // Panel lateral de controles
         JPanel panelControles = new JPanel(new GridBagLayout());
-        panelControles.setBackground(new Color(240, 240, 240));
+        panelControles.setBackground(new Color(11, 61, 11)); // verde oscuro
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -48,69 +45,97 @@ public class Inicio extends JFrame {
         btnActualizar = new JButton("Actualizar");
         btnIniciar = new JButton("Iniciar (Movimiento)");
 
+        // Estilos botones
+        JButton[] botones = {btnIniciarObjetos, btnClonarComida, btnActualizar, btnIniciar};
+        for (JButton b : botones) {
+            b.setBackground(new Color(30, 130, 76)); // verde brillante
+            b.setForeground(Color.WHITE);
+            b.setBorderPainted(false);
+            b.setFocusPainted(false);
+        }
+
         JLabel lblId = new JLabel("ID:");
         JLabel lblX = new JLabel("X:");
         JLabel lblY = new JLabel("Y:");
+
+        // Estilo texto labels
+        lblId.setForeground(Color.WHITE);
+        lblX.setForeground(Color.WHITE);
+        lblY.setForeground(Color.WHITE);
+
+        JLabel lblActualizar = new JLabel("Actualizar posición:");
+        lblActualizar.setForeground(Color.WHITE);
+
         txtId = new JTextField(5);
         txtX = new JTextField(5);
         txtY = new JTextField(5);
 
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         panelControles.add(btnIniciarObjetos, gbc);
-        gbc.gridy++; panelControles.add(btnClonarComida, gbc);
-        gbc.gridy++; panelControles.add(new JLabel("Actualizar posición:"), gbc);
+        gbc.gridy++;
+        panelControles.add(btnClonarComida, gbc);
+        gbc.gridy++;
+        panelControles.add(lblActualizar, gbc);
+
         gbc.gridwidth = 1;
-        gbc.gridy++; panelControles.add(lblId, gbc); gbc.gridx = 1; panelControles.add(txtId, gbc);
-        gbc.gridx = 0; gbc.gridy++; panelControles.add(lblX, gbc); gbc.gridx = 1; panelControles.add(txtX, gbc);
-        gbc.gridx = 0; gbc.gridy++; panelControles.add(lblY, gbc); gbc.gridx = 1; panelControles.add(txtY, gbc);
-        gbc.gridx = 0; gbc.gridy++; gbc.gridwidth = 2; panelControles.add(btnActualizar, gbc);
-        gbc.gridy++; panelControles.add(btnIniciar, gbc);
+        gbc.gridy++;
+        panelControles.add(lblId, gbc);
+        gbc.gridx = 1;
+        panelControles.add(txtId, gbc);
+
+        gbc.gridx = 0; gbc.gridy++;
+        panelControles.add(lblX, gbc);
+        gbc.gridx = 1;
+        panelControles.add(txtX, gbc);
+
+        gbc.gridx = 0; gbc.gridy++;
+        panelControles.add(lblY, gbc);
+        gbc.gridx = 1;
+        panelControles.add(txtY, gbc);
+
+        gbc.gridx = 0; gbc.gridy++; gbc.gridwidth = 2;
+        panelControles.add(btnActualizar, gbc);
+        gbc.gridy++;
+        panelControles.add(btnIniciar, gbc);
 
         add(panelControles, BorderLayout.EAST);
 
-        //Eventos
+        // Eventos
         btnIniciarObjetos.addActionListener(e -> iniciarObjetos());
         btnClonarComida.addActionListener(e -> clonarComida());
         btnActualizar.addActionListener(e -> actualizarComida());
         btnIniciar.addActionListener(e -> toggleMovimiento());
     }
 
-    //Métodos
-
+    // Métodos
     private void iniciarObjetos() {
         comidasClonadas.clear();
         contadorIds.set(1);
 
         // Crear la comida prototipo
         comidaBase = new Comida(0, 0, 0);
-
         registro.registrarPrototipo("comidaBase", comidaBase);
 
         // Crear la serpiente (solo la cabeza)
         int startX = (panelJuego.getWidth() / 2 / 20) * 20;
         int startY = (panelJuego.getHeight() / 2 / 20) * 20;
-
         snake = new Snake(0, startX, startY, "serpiente", registro);
 
-
-        // Registrar un segmento base por separado (NO clonando la serpiente)
-        // Registrar un segmento base que se dibuje como parte de la serpiente
+        // Registrar un segmento base
         ElementosSnake segmentoBase = new ElementosSnake(0, 0, 0, "segmento") {
             @Override
             public void dibujar(Graphics g) {
-                g.setColor(new Color(0, 128, 0)); // verde oscuro
+                g.setColor(new Color(0, 100, 0)); // verde oscuro serpiente
                 g.fillRect(x, y, 20, 20);
             }
         };
         registro.registrarPrototipo("segmentoBase", segmentoBase);
-
         segmentoBase.setTipo("segmento");
         registro.registrarPrototipo("segmentoBase", segmentoBase);
 
         JOptionPane.showMessageDialog(this, "Objetos base iniciados correctamente.");
         panelJuego.repaint();
     }
-
 
     private void clonarComida() {
         ElementosSnake prototipo = registro.obtenerPrototipo("comidaBase");
@@ -119,32 +144,24 @@ public class Inicio extends JFrame {
             return;
         }
 
-        // Clonar el prototipo
         Comida clon = (Comida) prototipo.clone();
         int nuevoId = contadorIds.getAndIncrement();
         clon.setId(nuevoId);
 
-        // --- POSICIÓN CORREGIDA ---
-        // Aparece JUSTO DEBAJO de la comida original y alineado con celdas de 20px
-        int posX = comidaBase.getX();  
+        int posX = comidaBase.getX();
         int posY = comidaBase.getY() + (comidasClonadas.size() + 1) * 20;
 
-        // Validación: evitar colocar fuera del panel
         if (posY + 20 > panelJuego.getHeight()) {
-            JOptionPane.showMessageDialog(this,
-                    "No se puede clonar: la comida aparecería fuera del panel.");
+            JOptionPane.showMessageDialog(this, "No se puede clonar: la comida aparecería fuera del panel.");
             return;
         }
 
         clon.setX(posX);
         clon.setY(posY);
 
-        // Guardar clon
         comidasClonadas.put(nuevoId, clon);
-
         panelJuego.repaint();
     }
-
 
     private void actualizarComida() {
         try {
@@ -157,6 +174,7 @@ public class Inicio extends JFrame {
                 JOptionPane.showMessageDialog(this, "No existe comida con ID " + id);
                 return;
             }
+
             c.setX(x);
             c.setY(y);
             panelJuego.repaint();
@@ -172,17 +190,12 @@ public class Inicio extends JFrame {
         if (movimientoActivo) panelJuego.requestFocusInWindow();
     }
 
-   //Panel de juego
-
+    // Panel de juego
     private class GamePanel extends JPanel implements KeyListener {
 
         private boolean movimientoPermitido(int x, int y) {
-            return x >= 0 &&
-                y >= 0 &&
-                x + 20 <= getWidth() &&
-                y + 20 <= getHeight();
+            return x >= 0 && y >= 0 && x + 20 <= getWidth() && y + 20 <= getHeight();
         }
-
 
         public GamePanel() {
             setBackground(Color.WHITE);
@@ -194,30 +207,25 @@ public class Inicio extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            // Dibujar cuadrícula
-            g.setColor(new Color(220, 220, 220)); // gris claro
-            for (int i = 0; i < getWidth(); i += 20) {
-                g.drawLine(i, 0, i, getHeight()); // líneas verticales
-            }
-            for (int j = 0; j < getHeight(); j += 20) {
-                g.drawLine(0, j, getWidth(), j); // líneas horizontales
+            // Cuadrícula ajedrez
+            Color c1 = new Color(210, 166, 121); // café claro
+            Color c2 = new Color(255, 138, 117); // tomate suave
+
+            for (int y = 0; y < getHeight(); y += 20) {
+                for (int x = 0; x < getWidth(); x += 20) {
+                    g.setColor(((x + y) / 20) % 2 == 0 ? c1 : c2);
+                    g.fillRect(x, y, 20, 20);
+                }
             }
 
+            // comida base
+            if (comidaBase != null) comidaBase.dibujar(g);
 
-            // Dibujar la comida base
-            if (comidaBase != null) {
-                comidaBase.dibujar(g);
-            }
+            // comidas clonadas
+            for (Comida c : comidasClonadas.values()) c.dibujar(g);
 
-            // Dibujar las comidas clonadas
-            for (Comida c : comidasClonadas.values()) {
-                c.dibujar(g);
-            }
-
-            // Dibujar la serpiente
-            if (snake != null) {
-                snake.dibujar(g);
-            }
+            // serpiente
+            if (snake != null) snake.dibujar(g);
         }
 
         @Override
@@ -225,89 +233,64 @@ public class Inicio extends JFrame {
             if (!movimientoActivo || snake == null) return;
 
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_UP -> {
-                    if (movimientoPermitido(snake.getX(), snake.getY() - 20))
-                        snake.moverArriba();
-                }
-                case KeyEvent.VK_DOWN -> {
-                    if (movimientoPermitido(snake.getX(), snake.getY() + 20))
-                        snake.moverAbajo();
-                }
-                case KeyEvent.VK_LEFT -> {
-                    if (movimientoPermitido(snake.getX() - 20, snake.getY()))
-                        snake.moverIzquierda();
-                }
-                case KeyEvent.VK_RIGHT -> {
-                    if (movimientoPermitido(snake.getX() + 20, snake.getY()))
-                        snake.moverDerecha();
-                }
-
+                case KeyEvent.VK_UP -> { if (movimientoPermitido(snake.getX(), snake.getY() - 20)) snake.moverArriba(); }
+                case KeyEvent.VK_DOWN -> { if (movimientoPermitido(snake.getX(), snake.getY() + 20)) snake.moverAbajo(); }
+                case KeyEvent.VK_LEFT -> { if (movimientoPermitido(snake.getX() - 20, snake.getY())) snake.moverIzquierda(); }
+                case KeyEvent.VK_RIGHT ->{ if (movimientoPermitido(snake.getX() + 20, snake.getY())) snake.moverDerecha(); }
             }
 
-            // Verificar colisiones
             checkColisiones();
-
             repaint();
         }
 
-    private void checkColisiones() {
-    if (snake == null) return;
+        private void checkColisiones() {
+            if (snake == null) return;
 
-    Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
-    Integer idColision = null;
+            Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
+            Integer idColision = null;
 
-    // Colisión con comida
-    for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
-        Comida c = entry.getValue();
-        Rectangle rComida = new Rectangle(c.getX(), c.getY(), 20, 20);
+            for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
+                Comida c = entry.getValue();
+                Rectangle r = new Rectangle(c.getX(), c.getY(), 20, 20);
+                if (cabeza.intersects(r)) { idColision = entry.getKey(); break; }
+            }
 
-        if (cabeza.intersects(rComida)) {
-            idColision = entry.getKey();
-            break;
-        }
-    }
+            if (idColision != null) {
+                comidasClonadas.remove(idColision);
+                snake.crecer();
+                panelJuego.repaint();
+                return;
+            }
 
-    if (idColision != null) {
-        comidasClonadas.remove(idColision);
-        snake.crecer();
-        panelJuego.repaint();
-        return; // IMPORTANTE: no revisar auto-colisión en el mismo ciclo
-    }
+            if (snake.isAcabaDeCrecer()) {
+                snake.setAcabaDeCrecer(false);
+                return;
+            }
 
-    // ===== EVITAR AUTO-COLISIÓN EN EL MISMO MOVIMIENTO =====
-    if (snake.isAcabaDeCrecer()) {
-        snake.setAcabaDeCrecer(false);
-        return;
-    }
+            try {
+                var colaField = snake.getClass().getDeclaredField("cola");
+                colaField.setAccessible(true);
+                java.util.List<ElementosSnake> cola = (java.util.List<ElementosSnake>) colaField.get(snake);
 
-    // Colisión con su propio cuerpo
-    try {
-        java.lang.reflect.Field colaField = snake.getClass().getDeclaredField("cola");
-        colaField.setAccessible(true);
-        java.util.List<ElementosSnake> cola = (java.util.List<ElementosSnake>) colaField.get(snake);
+                for (ElementosSnake segmento : cola) {
+                    if (cabeza.intersects(new Rectangle(segmento.getX(), segmento.getY(), 20, 20))) {
+                        movimientoActivo = false;
+                        btnIniciar.setText("Iniciar (Movimiento)");
+                        JOptionPane.showMessageDialog(null, "¡Game Over! La serpiente se mordió a sí misma.");
+                        break;
+                    }
+                }
 
-        for (ElementosSnake segmento : cola) {
-            Rectangle rSegmento = new Rectangle(segmento.getX(), segmento.getY(), 20, 20);
-            if (cabeza.intersects(rSegmento)) {
-                movimientoActivo = false;
-                btnIniciar.setText("Iniciar (Movimiento)");
-                JOptionPane.showMessageDialog(null, "¡Game Over! La serpiente se mordió a sí misma.");
-                break;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
-
-
-
 
         @Override public void keyTyped(KeyEvent e) {}
         @Override public void keyReleased(KeyEvent e) {}
     }
 
-    //Main
+    // Main
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Inicio().setVisible(true));
     }
