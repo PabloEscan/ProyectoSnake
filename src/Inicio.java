@@ -82,11 +82,16 @@ public class Inicio extends JFrame {
         contadorIds.set(1);
 
         // Crear la comida prototipo
-        comidaBase = new Comida(0, 5, 5);
+        comidaBase = new Comida(0, 0, 0);
+
         registro.registrarPrototipo("comidaBase", comidaBase);
 
         // Crear la serpiente (solo la cabeza)
-        snake = new Snake(0, panelJuego.getWidth() / 2, panelJuego.getHeight() / 2, "serpiente", registro);
+        int startX = (panelJuego.getWidth() / 2 / 20) * 20;
+        int startY = (panelJuego.getHeight() / 2 / 20) * 20;
+
+        snake = new Snake(0, startX, startY, "serpiente", registro);
+
 
         // Registrar un segmento base por separado (NO clonando la serpiente)
         // Registrar un segmento base que se dibuje como parte de la serpiente
@@ -114,15 +119,32 @@ public class Inicio extends JFrame {
             return;
         }
 
+        // Clonar el prototipo
         Comida clon = (Comida) prototipo.clone();
         int nuevoId = contadorIds.getAndIncrement();
         clon.setId(nuevoId);
-        clon.setX(50);
-        clon.setY(100 + comidasClonadas.size() * 30);
 
+        // --- POSICIÓN CORREGIDA ---
+        // Aparece JUSTO DEBAJO de la comida original y alineado con celdas de 20px
+        int posX = comidaBase.getX();  
+        int posY = comidaBase.getY() + (comidasClonadas.size() + 1) * 20;
+
+        // Validación: evitar colocar fuera del panel
+        if (posY + 20 > panelJuego.getHeight()) {
+            JOptionPane.showMessageDialog(this,
+                    "No se puede clonar: la comida aparecería fuera del panel.");
+            return;
+        }
+
+        clon.setX(posX);
+        clon.setY(posY);
+
+        // Guardar clon
         comidasClonadas.put(nuevoId, clon);
+
         panelJuego.repaint();
     }
+
 
     private void actualizarComida() {
         try {
@@ -172,6 +194,16 @@ public class Inicio extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
+            // Dibujar cuadrícula
+            g.setColor(new Color(220, 220, 220)); // gris claro
+            for (int i = 0; i < getWidth(); i += 20) {
+                g.drawLine(i, 0, i, getHeight()); // líneas verticales
+            }
+            for (int j = 0; j < getHeight(); j += 20) {
+                g.drawLine(0, j, getWidth(), j); // líneas horizontales
+            }
+
+
             // Dibujar la comida base
             if (comidaBase != null) {
                 comidaBase.dibujar(g);
@@ -219,48 +251,55 @@ public class Inicio extends JFrame {
         }
 
     private void checkColisiones() {
-        if (snake == null) return;
+    if (snake == null) return;
 
-        Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
-        Integer idColision = null;
+    Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
+    Integer idColision = null;
 
-        //Verificar colisión con comida ===
-        for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
-            Comida c = entry.getValue();
-            Rectangle rComida = new Rectangle(c.getX(), c.getY(), 20, 20);
+    // Colisión con comida
+    for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
+        Comida c = entry.getValue();
+        Rectangle rComida = new Rectangle(c.getX(), c.getY(), 20, 20);
 
-            if (cabeza.intersects(rComida)) {
-                idColision = entry.getKey();
+        if (cabeza.intersects(rComida)) {
+            idColision = entry.getKey();
+            break;
+        }
+    }
+
+    if (idColision != null) {
+        comidasClonadas.remove(idColision);
+        snake.crecer();
+        panelJuego.repaint();
+        return; // IMPORTANTE: no revisar auto-colisión en el mismo ciclo
+    }
+
+    // ===== EVITAR AUTO-COLISIÓN EN EL MISMO MOVIMIENTO =====
+    if (snake.isAcabaDeCrecer()) {
+        snake.setAcabaDeCrecer(false);
+        return;
+    }
+
+    // Colisión con su propio cuerpo
+    try {
+        java.lang.reflect.Field colaField = snake.getClass().getDeclaredField("cola");
+        colaField.setAccessible(true);
+        java.util.List<ElementosSnake> cola = (java.util.List<ElementosSnake>) colaField.get(snake);
+
+        for (ElementosSnake segmento : cola) {
+            Rectangle rSegmento = new Rectangle(segmento.getX(), segmento.getY(), 20, 20);
+            if (cabeza.intersects(rSegmento)) {
+                movimientoActivo = false;
+                btnIniciar.setText("Iniciar (Movimiento)");
+                JOptionPane.showMessageDialog(null, "¡Game Over! La serpiente se mordió a sí misma.");
                 break;
             }
         }
-
-        if (idColision != null) {
-            comidasClonadas.remove(idColision);
-            snake.crecer();
-            panelJuego.repaint();
-        }
-
-        //Verificar colisión con su propio cuerpo
-        // Recorremos todos los segmentos de la cola de la serpiente
-        try {
-            java.lang.reflect.Field colaField = snake.getClass().getDeclaredField("cola");
-            colaField.setAccessible(true);
-            java.util.List<ElementosSnake> cola = (java.util.List<ElementosSnake>) colaField.get(snake);
-
-            for (ElementosSnake segmento : cola) {
-                Rectangle rSegmento = new Rectangle(segmento.getX(), segmento.getY(), 20, 20);
-                if (cabeza.intersects(rSegmento)) {
-                    movimientoActivo = false;
-                    btnIniciar.setText("Iniciar (Movimiento)");
-                    JOptionPane.showMessageDialog(null, "¡Game Over! La serpiente se mordió a sí misma.");
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+
 
 
 
@@ -273,4 +312,3 @@ public class Inicio extends JFrame {
         SwingUtilities.invokeLater(() -> new Inicio().setVisible(true));
     }
 }
- 

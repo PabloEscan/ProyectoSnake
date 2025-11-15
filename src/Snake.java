@@ -1,4 +1,3 @@
-package prototipo; 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
@@ -6,6 +5,24 @@ import java.util.List;
 
 // Hereda de la clase base ElementosSnake
 public class Snake extends ElementosSnake {
+
+    private String direccion = "NINGUNA";
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+
+    private boolean acabaDeCrecer = false;
+
+    public boolean isAcabaDeCrecer() {
+        return acabaDeCrecer;
+    }
+
+    public void setAcabaDeCrecer(boolean v) {
+        acabaDeCrecer = v;
+    }
+
 
     // Tamaño de cada cuadrado de la serpiente
     private int tamanoSegmento = 20; 
@@ -44,27 +61,29 @@ public class Snake extends ElementosSnake {
 
     // Mueve la serpiente hacia arriba
     public void moverArriba() {
-        moverCola(); //mueve la cola primero
-        this.y -= tamanoSegmento; //mueve la cabeza
+        moverCola();
+        this.y -= tamanoSegmento;
+        direccion = "ARRIBA";
     }
 
-    //mueve la serpiente hacia abajo
     public void moverAbajo() {
         moverCola();
         this.y += tamanoSegmento;
+        direccion = "ABAJO";
     }
 
-    //Mueve la serpiente hacia la izquierda
     public void moverIzquierda() {
         moverCola();
         this.x -= tamanoSegmento;
+        direccion = "IZQUIERDA";
     }
 
-    // Mueve la serpiente hacia la derecha
     public void moverDerecha() {
         moverCola();
         this.x += tamanoSegmento;
+        direccion = "DERECHA";
     }
+
     
     // Método privado que hace que la cola siga a la cabeza
     private void moverCola() {
@@ -85,32 +104,32 @@ public class Snake extends ElementosSnake {
     // logica de crecimiento
     
     public void crecer() {
-        
-        // 1) Obtiene del registro el prototipo segmentoBase
         ElementosSnake prototipoSegmento = registro.obtenerPrototipo("segmentoBase");
-        
-        // 2) Se clona
         ElementosSnake nuevoSegmento = prototipoSegmento.clone();
-        
-        int nuevoX;
-        int nuevoY;
 
-        if (cola.isEmpty()) {
-            // Si no hay cola, el  segmento aparece donde está la cabeza
-            nuevoX = this.x;
-            nuevoY = this.y;
-        } else {
-            // Si hay cola, aparece donde está el último segmento de la cola
-            ElementosSnake ultimoSegmento = cola.get(cola.size() - 1);
-            nuevoX = ultimoSegmento.getX();
-            nuevoY = ultimoSegmento.getY();
+        int nuevoX = x;
+        int nuevoY = y;
+
+        // Crecer justo detrás de la cabeza según dirección
+        switch (direccion) {
+            case "ARRIBA" -> nuevoY = y + tamanoSegmento;
+            case "ABAJO" -> nuevoY = y - tamanoSegmento;
+            case "IZQUIERDA" -> nuevoX = x + tamanoSegmento;
+            case "DERECHA" -> nuevoX = x - tamanoSegmento;
         }
-        
-        //se posiciona el nuevo segmento en ese lugar
-        nuevoSegmento.setX(nuevoX); 
+
+        // Si existe cola, seguir creciendo al final de la cola
+        if (!cola.isEmpty()) {
+            ElementosSnake ultimo = cola.get(cola.size() - 1);
+            nuevoX = ultimo.getX();
+            nuevoY = ultimo.getY();
+        }
+
+        nuevoSegmento.setX(nuevoX);
         nuevoSegmento.setY(nuevoY);
-        
-        // 3) se agrega al final de la serpiente
+
         cola.add(nuevoSegmento);
     }
+
+
 }
