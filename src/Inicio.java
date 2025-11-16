@@ -4,19 +4,20 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+// Clase principal que contiene la ventana y la lógica del juego
 public class Inicio extends JFrame {
-    private GamePanel panelJuego;
+    private GamePanel panelJuego; // Panel donde se dibuja el juego
     private JButton btnIniciarObjetos;
     private JButton btnClonarComida;
     private JButton btnActualizar;
     private JButton btnIniciar;
     private JTextField txtId, txtX, txtY;
-    private PrototypeRegistry registro;
+    private PrototypeRegistry registro; // Registro de prototipos para clonación
     private Snake snake;
-    private Comida comidaBase;
-    private Map<Integer, Comida> comidasClonadas;
-    private AtomicInteger contadorIds;
-    private boolean movimientoActivo = false;
+    private Comida comidaBase; // Prototipo de comida base
+    private Map<Integer, Comida> comidasClonadas; // Almacena manzanas clonadas con su id
+    private AtomicInteger contadorIds; // Para asignar IDs únicos
+    private boolean movimientoActivo = false; // Controla si la serpiente puede moverse
 
     public Inicio() {
         setTitle("Juego Snake - Patrón Prototype");
@@ -33,9 +34,9 @@ public class Inicio extends JFrame {
         panelJuego = new GamePanel();
         add(panelJuego, BorderLayout.CENTER);
 
-        // Panel lateral de controles
+        // Panel lateral con controles y campos para actualizar
         JPanel panelControles = new JPanel(new GridBagLayout());
-        panelControles.setBackground(new Color(11, 61, 11)); // verde oscuro
+        panelControles.setBackground(new Color(11, 61, 11));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -45,10 +46,10 @@ public class Inicio extends JFrame {
         btnActualizar = new JButton("Actualizar");
         btnIniciar = new JButton("Iniciar (Movimiento)");
 
-        // Estilos botones
+        // Estilos para botones
         JButton[] botones = {btnIniciarObjetos, btnClonarComida, btnActualizar, btnIniciar};
         for (JButton b : botones) {
-            b.setBackground(new Color(30, 130, 76)); // verde brillante
+            b.setBackground(new Color(30, 130, 76));
             b.setForeground(Color.WHITE);
             b.setBorderPainted(false);
             b.setFocusPainted(false);
@@ -57,8 +58,6 @@ public class Inicio extends JFrame {
         JLabel lblId = new JLabel("ID:");
         JLabel lblX = new JLabel("X:");
         JLabel lblY = new JLabel("Y:");
-
-        // Estilo texto labels
         lblId.setForeground(Color.WHITE);
         lblX.setForeground(Color.WHITE);
         lblY.setForeground(Color.WHITE);
@@ -70,6 +69,7 @@ public class Inicio extends JFrame {
         txtX = new JTextField(5);
         txtY = new JTextField(5);
 
+        // Agregar componentes al panel controles
         gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         panelControles.add(btnIniciarObjetos, gbc);
         gbc.gridy++;
@@ -100,43 +100,43 @@ public class Inicio extends JFrame {
 
         add(panelControles, BorderLayout.EAST);
 
-        // Eventos
+        // Eventos para botones
         btnIniciarObjetos.addActionListener(e -> iniciarObjetos());
         btnClonarComida.addActionListener(e -> clonarComida());
         btnActualizar.addActionListener(e -> actualizarComida());
         btnIniciar.addActionListener(e -> toggleMovimiento());
     }
 
-    // Métodos
+    // Método para inicializar los objetos base (comida y serpiente)
     private void iniciarObjetos() {
         comidasClonadas.clear();
         contadorIds.set(1);
 
-        // Crear la comida prototipo
+        // Crear prototipo de comida en la celda (0,0)
         comidaBase = new Comida(0, 0, 0);
         registro.registrarPrototipo("comidaBase", comidaBase);
 
-        // Crear la serpiente (solo la cabeza)
-        int startX = (panelJuego.getWidth() / 2 / 20) * 20;
-        int startY = (panelJuego.getHeight() / 2 / 20) * 20;
+        // Crear serpiente en el centro de la pantalla en coordenadas de celda
+        int startX = (panelJuego.getWidth() / 2) / 20;
+        int startY = (panelJuego.getHeight() / 2) / 20;
         snake = new Snake(0, startX, startY, "serpiente", registro);
 
-        // Registrar un segmento base
+        // Crear y registrar segmento base para crecer la serpiente
         ElementosSnake segmentoBase = new ElementosSnake(0, 0, 0, "segmento") {
             @Override
             public void dibujar(Graphics g) {
-                g.setColor(new Color(0, 100, 0)); // verde oscuro serpiente
-                g.fillRect(x, y, 20, 20);
+                // Dibuja segmento de cola multiplicando x,y por 20 (pixeles)
+                g.setColor(new Color(0, 100, 0));
+                g.fillRect(x * 20, y * 20, 20, 20);
             }
         };
-        registro.registrarPrototipo("segmentoBase", segmentoBase);
-        segmentoBase.setTipo("segmento");
         registro.registrarPrototipo("segmentoBase", segmentoBase);
 
         JOptionPane.showMessageDialog(this, "Objetos base iniciados correctamente.");
         panelJuego.repaint();
     }
 
+    // Método para clonar comida (manzana) agregándola una celda abajo de la última
     private void clonarComida() {
         ElementosSnake prototipo = registro.obtenerPrototipo("comidaBase");
         if (prototipo == null) {
@@ -148,10 +148,13 @@ public class Inicio extends JFrame {
         int nuevoId = contadorIds.getAndIncrement();
         clon.setId(nuevoId);
 
+        // Posición en celdas: misma columna X, y aumenta 1 en Y por cada clon
         int posX = comidaBase.getX();
-        int posY = comidaBase.getY() + (comidasClonadas.size() + 1) * 20;
+        int posY = comidaBase.getY() + (comidasClonadas.size() + 1);
 
-        if (posY + 20 > panelJuego.getHeight()) {
+        // Validar que no se salga del panel
+        int maxCeldasY = panelJuego.getHeight() / 20;
+        if (posY >= maxCeldasY) {
             JOptionPane.showMessageDialog(this, "No se puede clonar: la comida aparecería fuera del panel.");
             return;
         }
@@ -163,6 +166,7 @@ public class Inicio extends JFrame {
         panelJuego.repaint();
     }
 
+    // Método para actualizar la posición de una comida clonada según entrada del usuario
     private void actualizarComida() {
         try {
             int id = Integer.parseInt(txtId.getText().trim());
@@ -175,6 +179,16 @@ public class Inicio extends JFrame {
                 return;
             }
 
+            int maxCeldasX = panelJuego.getWidth() / 20;
+            int maxCeldasY = panelJuego.getHeight() / 20;
+
+            // Validar que la posición esté dentro de la cuadrícula
+            if (x < 0 || x >= maxCeldasX || y < 0 || y >= maxCeldasY) {
+                JOptionPane.showMessageDialog(this, "Posición fuera del área del juego.");
+                return;
+            }
+
+            // Actualizar posición en coordenadas de celda
             c.setX(x);
             c.setY(y);
             panelJuego.repaint();
@@ -184,17 +198,21 @@ public class Inicio extends JFrame {
         }
     }
 
+    // Activa o desactiva el movimiento de la serpiente
     private void toggleMovimiento() {
         movimientoActivo = !movimientoActivo;
         btnIniciar.setText(movimientoActivo ? "Detener" : "Iniciar (Movimiento)");
         if (movimientoActivo) panelJuego.requestFocusInWindow();
     }
 
-    // Panel de juego
+    // Panel donde se dibuja el juego y se capturan teclas
     private class GamePanel extends JPanel implements KeyListener {
 
+        // Verifica si el movimiento a la celda (x,y) es válido dentro del panel
         private boolean movimientoPermitido(int x, int y) {
-            return x >= 0 && y >= 0 && x + 20 <= getWidth() && y + 20 <= getHeight();
+            int maxCeldasX = getWidth() / 20;
+            int maxCeldasY = getHeight() / 20;
+            return x >= 0 && y >= 0 && x < maxCeldasX && y < maxCeldasY;
         }
 
         public GamePanel() {
@@ -207,9 +225,9 @@ public class Inicio extends JFrame {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            // Cuadrícula ajedrez
-            Color c1 = new Color(210, 166, 121); // café claro
-            Color c2 = new Color(255, 138, 117); // tomate suave
+            // Dibuja la cuadrícula estilo ajedrez
+            Color c1 = new Color(210, 166, 121);
+            Color c2 = new Color(255, 138, 117);
 
             for (int y = 0; y < getHeight(); y += 20) {
                 for (int x = 0; x < getWidth(); x += 20) {
@@ -218,13 +236,11 @@ public class Inicio extends JFrame {
                 }
             }
 
-            // comida base
+            // Dibuja la comida base y todas las comidas clonadas
             if (comidaBase != null) comidaBase.dibujar(g);
-
-            // comidas clonadas
             for (Comida c : comidasClonadas.values()) c.dibujar(g);
 
-            // serpiente
+            // Dibuja la serpiente
             if (snake != null) snake.dibujar(g);
         }
 
@@ -232,48 +248,71 @@ public class Inicio extends JFrame {
         public void keyPressed(KeyEvent e) {
             if (!movimientoActivo || snake == null) return;
 
+            // Movimiento por teclas con validación dentro de la cuadrícula
             switch (e.getKeyCode()) {
-                case KeyEvent.VK_UP -> { if (movimientoPermitido(snake.getX(), snake.getY() - 20)) snake.moverArriba(); }
-                case KeyEvent.VK_DOWN -> { if (movimientoPermitido(snake.getX(), snake.getY() + 20)) snake.moverAbajo(); }
-                case KeyEvent.VK_LEFT -> { if (movimientoPermitido(snake.getX() - 20, snake.getY())) snake.moverIzquierda(); }
-                case KeyEvent.VK_RIGHT ->{ if (movimientoPermitido(snake.getX() + 20, snake.getY())) snake.moverDerecha(); }
+                case KeyEvent.VK_UP -> {
+                    if (movimientoPermitido(snake.getX(), snake.getY() - 1))
+                        snake.moverArriba();
+                }
+                case KeyEvent.VK_DOWN -> {
+                    if (movimientoPermitido(snake.getX(), snake.getY() + 1))
+                        snake.moverAbajo();
+                }
+                case KeyEvent.VK_LEFT -> {
+                    if (movimientoPermitido(snake.getX() - 1, snake.getY()))
+                        snake.moverIzquierda();
+                }
+                case KeyEvent.VK_RIGHT -> {
+                    if (movimientoPermitido(snake.getX() + 1, snake.getY()))
+                        snake.moverDerecha();
+                }
             }
 
             checkColisiones();
             repaint();
         }
 
+        // Verifica colisiones entre la cabeza de la serpiente y la comida o cola
         private void checkColisiones() {
             if (snake == null) return;
 
-            Rectangle cabeza = new Rectangle(snake.getX(), snake.getY(), 20, 20);
+            // Crea un rectángulo para la cabeza en pixeles
+            Rectangle cabeza = new Rectangle(snake.getX() * 20, snake.getY() * 20, 20, 20);
             Integer idColision = null;
 
+            // Recorre todas las comidas clonadas para detectar colisión
             for (Map.Entry<Integer, Comida> entry : comidasClonadas.entrySet()) {
                 Comida c = entry.getValue();
-                Rectangle r = new Rectangle(c.getX(), c.getY(), 20, 20);
-                if (cabeza.intersects(r)) { idColision = entry.getKey(); break; }
+                Rectangle r = new Rectangle(c.getX() * 20, c.getY() * 20, 20, 20);
+                if (cabeza.intersects(r)) {
+                    idColision = entry.getKey();
+                    break;
+                }
             }
 
             if (idColision != null) {
+                // Si colisiona, elimina la comida y crece la serpiente
                 comidasClonadas.remove(idColision);
                 snake.crecer();
                 panelJuego.repaint();
                 return;
             }
 
+            // Evita auto-colisión si acaba de crecer
             if (snake.isAcabaDeCrecer()) {
                 snake.setAcabaDeCrecer(false);
                 return;
             }
 
+            // Verifica si la serpiente se mordió a sí misma
             try {
                 var colaField = snake.getClass().getDeclaredField("cola");
                 colaField.setAccessible(true);
                 java.util.List<ElementosSnake> cola = (java.util.List<ElementosSnake>) colaField.get(snake);
 
                 for (ElementosSnake segmento : cola) {
-                    if (cabeza.intersects(new Rectangle(segmento.getX(), segmento.getY(), 20, 20))) {
+                    Rectangle r = new Rectangle(segmento.getX() * 20, segmento.getY() * 20, 20, 20);
+                    if (cabeza.intersects(r)) {
                         movimientoActivo = false;
                         btnIniciar.setText("Iniciar (Movimiento)");
                         JOptionPane.showMessageDialog(null, "¡Game Over! La serpiente se mordió a sí misma.");
@@ -286,11 +325,14 @@ public class Inicio extends JFrame {
             }
         }
 
-        @Override public void keyTyped(KeyEvent e) {}
-        @Override public void keyReleased(KeyEvent e) {}
+        @Override
+        public void keyTyped(KeyEvent e) {}
+
+        @Override
+        public void keyReleased(KeyEvent e) {}
     }
 
-    // Main
+    // Método main para arrancar la aplicación
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new Inicio().setVisible(true));
     }

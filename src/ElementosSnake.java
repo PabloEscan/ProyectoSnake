@@ -1,70 +1,46 @@
 import java.awt.Graphics;
 
 // Clase base abstracta para todos los elementos del juego
-// Implementa Cloneable para usar el Patrón Prototype
+// Implementa Cloneable para el patrón Prototype
 public abstract class ElementosSnake implements Cloneable {
 
-    // Atributos comunes para todos los elementos (id, posición, tipo)
+    // Identificador único del elemento
     protected int id;
+    // Coordenadas de celda (no pixeles)
     protected int x;
     protected int y;
+    // Tipo de elemento (ejemplo: comida, segmento, serpiente)
     protected String tipo;
 
-    // Constructor para inicializar los atributos comunes
+    // Constructor inicializa atributos comunes
     public ElementosSnake(int id, int x, int y, String tipo) {
         this.id = id;
         this.x = x;
         this.y = y;
         this.tipo = tipo;
     }
-    
-    // Método abstracto para el dibujo
+
+    // Método abstracto para dibujar el elemento
     public abstract void dibujar(Graphics g);
-    
-    //Getters y Setters 
-    //ID
-    public int getId(){ 
-        return id; 
-    }
-    public void setId(int id){
-        this.id = id; 
-    }
 
-    //X
-    public int getX(){ 
-        return x; 
-    } 
-    public void setX(int x){ 
-        this.x = x; 
-    }
+    // Getters y Setters
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    //Y
-    public int getY(){ 
-        return y; 
-    }
-    public void setY(int y){ 
-        this.y = y; 
-    }
-    
-    //TIPO
-    public String getTipo(){ 
-        return tipo; 
-    }
-    public void setTipo(String tipo){ 
-        this.tipo = tipo; 
-    }
+    public int getX() { return x; }
+    public void setX(int x) { this.x = x; }
 
-    // --- Método del Patrón Prototype ---
+    public int getY() { return y; }
+    public void setY(int y) { this.y = y; }
 
-    // El patrón Prototype indica que clone() solo debe crear una copia exacta del objeto
-    // La lógica de asignar nuevos IDs o mover el clon 
-    
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
+
+    // Implementación de clonación (patrón Prototype)
     @Override
     public ElementosSnake clone() {
         try {
-            // Llama a super.clone() para hacer la copia exacta
             return (ElementosSnake) super.clone();
-            
         } catch (CloneNotSupportedException e) {
             System.out.println("Error: la clonación no es posible");
             e.printStackTrace();
